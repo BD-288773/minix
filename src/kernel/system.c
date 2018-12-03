@@ -146,9 +146,10 @@ FORWARD _PROTOTYPE( int do_getmap, (message *m_ptr) );
 FORWARD _PROTOTYPE( int do_sysctl, (message *m_ptr) );
 FORWARD _PROTOTYPE( int do_puts, (message *m_ptr) );
 FORWARD _PROTOTYPE( int do_findproc, (message *m_ptr) );
-FORWARD _PROTOTYPE( struct proc* do_getprocptr, (int pid) );
-FORWARD _PROTOTYPE( int do_changeqgroup, (message *m_ptr) );
+_PROTOTYPE( struct proc* do_getprocptr, (pid_t) );
+FORWARD _PROTOTYPE( int do_chqgroup, (message *m_ptr) );
 FORWARD _PROTOTYPE( int do_getqgroup, (message *m_ptr) );
+
 
 /*===========================================================================*
  *				sys_task				     *
@@ -183,7 +184,7 @@ PUBLIC void sys_task()
 	    case SYS_SYSCTL:	r = do_sysctl(&m);	break;
 	    case SYS_PUTS:	r = do_puts(&m);	break;
 	    case SYS_FINDPROC:	r = do_findproc(&m);	break;
-	    case SYS_CHQGROUP:	r = do_changeqgroup(&m);break;
+	    case SYS_CHQGROUP:	r = do_chqgroup(&m);	break;
 	    case SYS_GETQGROUP:	r = do_getqgroup(&m);	break;
 	    default:		r = E_BAD_FCN;
 	}
@@ -239,9 +240,6 @@ register message *m_ptr;	/* pointer to request message */
   rpc->sys_time = 0;
   rpc->child_utime = 0;
   rpc->child_stime = 0;
-  
-
-  rpc->uq_group = 1;		/*  assign default queue group in case of being an user process */
 
   return(OK);
 }
@@ -780,60 +778,6 @@ register message *m_ptr;	/* pointer to request message */
   return(OK);
 }
 
-/*===========================================================================*
- *				do_getprocptr					     *
- *===========================================================================*/
-PRIVATE struct proc* do_getprocptr(pid)
-int pid;
-{
-	int I;
-
-	for(I = NR_TASKS; I < NR_TASKS + NR_PROCS; I++)
-		if(proc[I].p_pid == pid)
-			return &proc[I];
-	return 0;
-
-}
-
-/*===========================================================================*
- *				do_changeqgroup					     *
- *===========================================================================*/
-PRIVATE int do_changeqgroup(m_ptr)
-message *m_ptr;
-{
-	struct proc* ptr;
-	if( (ptr = do_getprocptr(m_ptr->m1_i1)) != NIL_PROC){
-		if(check_ready(ptr)){
-			lock_unready(ptr);
-				if(ptr->uq_group = 1)ptr->uq_group = 2;
-				else ptr->uq_group = 1;
-				printf("%d",ptr->uq_group);
-			lock_ready(ptr);
-			return 1;
-		}
-		else {
-			if(ptr->uq_group = 1)ptr->uq_group = 2;
-			else ptr->uq_group = 1;
-			printf("%d",ptr->uq_group);
-		}
-		return 2;
-	}
-	return EINVAL;
-
-}
-
-/*===========================================================================*
- *				do_getqgroup					     *
- *===========================================================================*/
-PRIVATE int do_getqgroup(m_ptr)
-message* m_ptr;
-{
-	struct proc* ptr;
-	if( (ptr = do_getprocptr(m_ptr->m1_i1)) != NIL_PROC)
-		return ptr->uq_group;
-	else return EINVAL;
-}
-
 
 /*==========================================================================*
  *				do_trace				    *
@@ -1072,6 +1016,59 @@ message *m_ptr;			/* pointer to request message */
 	}
   }
   return(ESRCH);
+}
+
+/*===========================================================================*
+ *				do_getprocptr					     *
+ *===========================================================================*/
+struct proc* do_getprocptr(int pid)
+{
+	int I;
+
+	for(I = NR_TASKS; I < NR_TASKS + NR_PROCS; I++)
+		if(proc[I].p_pid == pid)
+			return &proc[I];
+	return 0;
+
+}
+
+/*===========================================================================*
+ *				do_chqgroup					     *
+ *===========================================================================*/
+PRIVATE int do_chqgroup(m_ptr)
+message *m_ptr;
+{
+	struct proc* ptr;
+	if( (ptr = do_getprocptr(m_ptr->m1_i1)) != NIL_PROC){
+		if(check_ready(ptr)){
+			lock_unready(ptr);
+				if(ptr->uq_group = 1)ptr->uq_group = 2;
+				else ptr->uq_group = 1;
+				printf("%d",ptr->uq_group);
+			lock_ready(ptr);
+			return 1;
+		}
+		else {
+			if(ptr->uq_group = 1)ptr->uq_group = 2;
+			else ptr->uq_group = 1;
+			printf("%d",ptr->uq_group);
+		}
+		return 2;
+	}
+	return EINVAL;
+
+}
+
+/*===========================================================================*
+ *				do_getqgroup					     *
+ *===========================================================================*/
+PRIVATE int do_getqgroup(m_ptr)
+message* m_ptr;
+{
+	struct proc* ptr;
+	if( (ptr = do_getprocptr(m_ptr->m1_i1)) != NIL_PROC)
+		return ptr->uq_group;
+	return EINVAL;
 }
 
 /*===========================================================================*

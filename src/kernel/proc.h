@@ -59,7 +59,7 @@ struct proc {
 
   char p_name[16];		/* name of the process */
 
-  int uq_group;		 	/* if 0 process in queue gruoup A, if 1 in group B */
+  int uq_group;		 	/* if 1 process in queue gruoup A, if 2 in group B */
 };
 
 /* Guard word for task stacks. */

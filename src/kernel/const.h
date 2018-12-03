@@ -124,7 +124,7 @@
 #define USER_AQ            2	/* ready users in group A are scheduled via queue 2 */
 #define USER_BQ            3	/* ready users in group B are scheduled via queue 3 */
 #define NQ                 4	/* # of scheduling queues */
-#define USER_Q		   2
+
 /* Env_parse() return values. */
 #define EP_UNSET	0	/* variable not set */
 #define EP_OFF		1	/* var = off */

@@ -53,7 +53,7 @@ PUBLIC void main()
   /* Resolve driver selections in the task table. */
   mapdrivers();
 
-  proc[NR_TASKS+INIT_PROC_NR].uq_group = QUEUE_A;
+  proc[NR_TASKS+INIT_PROC_NR].uq_group = 1;
 
   /* Set up proc table entries for tasks and servers.  The stacks of the
    * kernel tasks are initialized to an array in data space.  The stacks

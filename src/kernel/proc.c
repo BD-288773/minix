@@ -45,6 +45,18 @@ FORWARD _PROTOTYPE( void cp_mess, (int src, struct proc *src_p, message *src_m,
 	cp_mess(s,sp,sm,dp,dm)
 #endif
 
+PUBLIC int check_ready(rp)
+struct proc *rp;
+{
+	struct proc *xp;
+	xp = rdy_head[USER_AQ + rp->uq_group -1];
+	while(xp != NIL_PROC){
+		if(xp == rp) return 1;
+		xp = xp->p_nextready;
+	}
+	return 0;
+}
+
 /*===========================================================================*
  *				interrupt				     * 
  *===========================================================================*/
@@ -308,8 +320,6 @@ PRIVATE void pick_proc()
 
   register struct proc *rp;	/* process to run */
 
-  printf("pick proc\n");
-
   if ( (rp = rdy_head[TASK_Q]) != NIL_PROC) {
 	proc_ptr = rp;
 	return;
@@ -318,19 +328,15 @@ PRIVATE void pick_proc()
 	proc_ptr = rp;
 	return;
   }
-  if ( (rp = rdy_head[USER_AQ]) != NIL_PROC ) {
-	if( proc_ptr->uq_group == QUEUE_B || rdy_head[USER_BQ] != NIL_PROC ){
-		proc_ptr = rp;
-		bill_ptr = rp;
-		return;
-	}
-  }
   if ( (rp = rdy_head[USER_BQ]) != NIL_PROC ) {
-	if( proc_ptr->uq_group == QUEUE_A || rdy_head[USER_AQ] != NIL_PROC ){
 		proc_ptr = rp;
 		bill_ptr = rp;
 		return;
-	}
+  }
+  if ( (rp = rdy_head[USER_AQ]) != NIL_PROC ) {
+		proc_ptr = rp;
+		bill_ptr = rp;
+		return;
   }
   /* No one is ready.  Run the idle task.  The idle task might be made an
    * always-ready user task to avoid this special case.
@@ -350,7 +356,7 @@ register struct proc *rp;	/* this process is now runnable */
  *   SERVER_Q - (middle priority) for MM and FS only
  *   USER_Q   - (lowest priority) for user processes
  */
-  int QUEUE = 0;
+  int QUEUE;
 
   if (istaskp(rp)) {
 	if (rdy_head[TASK_Q] != NIL_PROC)
@@ -384,6 +390,7 @@ register struct proc *rp;	/* this process is now runnable */
   }
   rp->p_nextready = NIL_PROC;
   rdy_tail[QUEUE] = rp;
+  return;
 }
 
 /*===========================================================================*
@@ -460,6 +467,7 @@ PRIVATE void sched()
  * process is runnable, put the current process on the end of the user queue,
  * possibly promoting another user to head of the queue.
  */
+
   if (rdy_head[SERVER_Q + proc_ptr->uq_group] == NIL_PROC) return;
 
   /* One or more user processes queued. */
@@ -468,23 +476,8 @@ PRIVATE void sched()
   rdy_head[SERVER_Q + proc_ptr->uq_group] = rdy_head[SERVER_Q + proc_ptr->uq_group]->p_nextready;
   rdy_tail[SERVER_Q + proc_ptr->uq_group]->p_nextready = NIL_PROC;
   pick_proc();
-
 }
 
-/*===========================================================================*
- *				check_ready				     * 
- *===========================================================================*/
-PUBLIC int check_ready(rp)
-register struct proc *rp;
-{
-	struct proc *xp;
-	xp = rdy_head[USER_AQ + rp->uq_group -1];
-	while(xp != NIL_PROC){
-		if(xp == rp) return 1;
-		xp = xp->p_nextready;
-	}
-	return 0;
-}
 /*==========================================================================*
  *				lock_mini_send				    *
  *==========================================================================*/

@@ -1,69 +1,76 @@
-#define NCALLS		  80	/* number of system calls allowed */
+/* Function prototypes. */
 
-#define EXIT		   1 
-#define FORK		   2 
-#define READ		   3 
-#define WRITE		   4 
-#define OPEN		   5 
-#define CLOSE		   6 
-#define WAIT		   7
-#define CREAT		   8 
-#define LINK		   9 
-#define UNLINK		  10 
-#define WAITPID		  11
-#define CHDIR		  12 
-#define TIME		  13
-#define MKNOD		  14 
-#define CHMOD		  15 
-#define CHOWN		  16 
-#define BRK		  17
-#define STAT		  18 
-#define LSEEK		  19
-#define GETPID		  20
-#define MOUNT		  21 
-#define UMOUNT		  22 
-#define SETUID		  23
-#define GETUID		  24
-#define STIME		  25
-#define PTRACE		  26
-#define ALARM		  27
-#define FSTAT		  28 
-#define PAUSE		  29
-#define UTIME		  30 
-#define ACCESS		  33 
-#define SYNC		  36 
-#define KILL		  37
-#define RENAME		  38
-#define MKDIR		  39
-#define RMDIR		  40
-#define DUP		  41 
-#define PIPE		  42 
-#define TIMES		  43
-#define SETGID		  46
-#define GETGID		  47
-#define SIGNAL		  48
-#define IOCTL		  54
-#define FCNTL		  55
-#define EXEC		  59
-#define UMASK		  60 
-#define CHROOT		  61 
-#define SETSID		  62
-#define GETPGRP		  63
+struct mproc;
+struct stat;
 
-/* The following are not system calls, but are processed like them. */
-#define KSIG		  64	/* kernel detected a signal */
-#define UNPAUSE		  65	/* to MM or FS: check for EINTR */
-#define REVIVE	 	  67	/* to FS: revive a sleeping process */
-#define TASK_REPLY	  68	/* to FS: reply code from tty task */
+/* alloc.c */
+_PROTOTYPE( phys_clicks alloc_mem, (phys_clicks clicks)			);
+_PROTOTYPE( void free_mem, (phys_clicks base, phys_clicks clicks)	);
+_PROTOTYPE( void mem_init, (phys_clicks *total, phys_clicks *free)	);
+_PROTOTYPE( int swap_on, (char *file, u32_t offset, u32_t size)	);
+_PROTOTYPE( int swap_off, (void)					);
+_PROTOTYPE( void swap_in, (void)					);
+_PROTOTYPE( void swap_inqueue, (struct mproc *rmp)			);
 
-/* Posix signal handling. */
-#define SIGACTION	  71
-#define SIGSUSPEND	  72
-#define SIGPENDING	  73
-#define SIGPROCMASK	  74
-#define SIGRETURN	  75
+/* break.c */
+_PROTOTYPE( int adjust, (struct mproc *rmp,
+			vir_clicks data_clicks, vir_bytes sp)		);
+_PROTOTYPE( int do_brk, (void)						);
+_PROTOTYPE( int size_ok, (int file_type, vir_clicks tc, vir_clicks dc,
+			vir_clicks sc, vir_clicks dvir, vir_clicks s_vir) );
 
-#define REBOOT		  76
-#define SVRCTL		  77
-#define CHANGEQGROUP	  78
-#define GETQGROPUP	  79
+/* exec.c */
+_PROTOTYPE( int do_exec, (void)						);
+_PROTOTYPE( void rw_seg, (int rw, int fd, int proc, int seg,
+						phys_bytes seg_bytes)	);
+_PROTOTYPE( struct mproc *find_share, (struct mproc *mp_ign, Ino_t ino,
+			Dev_t dev, time_t ctime)			);
+
+/* forkexit.c */
+_PROTOTYPE( int do_fork, (void)						);
+_PROTOTYPE( int do_mm_exit, (void)					);
+_PROTOTYPE( int do_waitpid, (void)					);
+_PROTOTYPE( void mm_exit, (struct mproc *rmp, int exit_status)		);
+
+/* getset.c */
+_PROTOTYPE( int do_getset, (void)					);
+
+/* main.c */
+_PROTOTYPE( void main, (void)						);
+_PROTOTYPE( int do_chqgroup, (void)					);
+_PROTOTYPE( int do_getqgroup, (void)					);
+
+/* misc.c */
+_PROTOTYPE( int do_reboot, (void)					);
+_PROTOTYPE( int do_svrctl, (void)					);
+
+#if (MACHINE == MACINTOSH)
+_PROTOTYPE( phys_clicks start_click, (void)				);
+#endif
+
+_PROTOTYPE( void setreply, (int proc_nr, int result)			);
+
+/* signal.c */
+_PROTOTYPE( int do_alarm, (void)					);
+_PROTOTYPE( int do_kill, (void)						);
+_PROTOTYPE( int do_ksig, (void)						);
+_PROTOTYPE( int do_pause, (void)					);
+_PROTOTYPE( int set_alarm, (int proc_nr, int sec)			);
+_PROTOTYPE( int check_sig, (pid_t proc_id, int signo)			);
+_PROTOTYPE( void sig_proc, (struct mproc *rmp, int sig_nr)		);
+_PROTOTYPE( int do_sigaction, (void)					);
+_PROTOTYPE( int do_sigpending, (void)					);
+_PROTOTYPE( int do_sigprocmask, (void)					);
+_PROTOTYPE( int do_sigreturn, (void)					);
+_PROTOTYPE( int do_sigsuspend, (void)					);
+_PROTOTYPE( void check_pending, (struct mproc *rmp)			);
+
+/* trace.c */
+_PROTOTYPE( int do_trace, (void)					);
+_PROTOTYPE( void stop_proc, (struct mproc *rmp, int sig_nr)		);
+
+/* utility.c */
+_PROTOTYPE( int allowed, (char *name_buf, struct stat *s_buf, int mask)	);
+_PROTOTYPE( int no_sys, (void)						);
+_PROTOTYPE( void panic, (char *format, int num)				);
+_PROTOTYPE( void tell_fs, (int what, int p1, int p2, int p3)		);
